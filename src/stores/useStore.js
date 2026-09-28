@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth'
-import { collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore'
+import { collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch } from 'firebase/firestore'
 import { auth, db, provider } from '../firebase'
 import { uid as newId } from '../lib/format'
 
@@ -13,7 +13,7 @@ let unsubs = []
 
 export const useStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       theme: 'light',
       user: null,
       ready: false,
@@ -53,6 +53,19 @@ export const useStore = create(
 
       addTx: (t) => safe(setDoc(ref('transactions', newId()), { createdAt: Date.now(), ...t })),
       updateTx: (id, patch) => safe(updateDoc(ref('transactions', id), patch)),
+      // Xóa toàn bộ 'tasks' hoặc 'transactions' của người dùng (theo lô, tối đa 400 mục/lô)
+      resetData: async (name) => {
+        const ids = get()[name].map((d) => d.id)
+        try {
+          for (let i = 0; i < ids.length; i += 400) {
+            const batch = writeBatch(db)
+            ids.slice(i, i + 400).forEach((id) => batch.delete(ref(name, id)))
+            await batch.commit()
+          }
+        } catch (e) {
+          alert('Đặt lại thất bại: ' + e.message)
+        }
+      },
       removeTx: (id) => safe(deleteDoc(ref('transactions', id))),
     }),
     { name: 'lifeflow', partialize: (s) => ({ theme: s.theme }) } // chỉ lưu theme ở máy

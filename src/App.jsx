@@ -4,6 +4,7 @@ import { useStore } from './stores/useStore'
 import Dashboard from './pages/Dashboard'
 import Tasks from './pages/Tasks'
 import Transactions from './pages/Transactions'
+import DeleteButton from './components/DeleteButton'
 
 const PATHS = {
   home: 'M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z',
@@ -56,7 +57,15 @@ function Shell() {
         <button className="theme" onClick={toggleTheme}>
           <Icon name={theme === 'light' ? 'moon' : 'sun'} />{theme === 'light' ? 'Chế độ tối' : 'Chế độ sáng'}
         </button>
-        <button className="theme" onClick={logout}><Icon name="out" />Đăng xuất</button>
+        <DeleteButton
+          className="theme"
+          label={<><Icon name="out" />Đăng xuất</>}
+          confirmLabel="Đăng xuất"
+          confirmClass="primary"
+          title="Đăng xuất khỏi LifeFlow?"
+          message="Bạn sẽ cần đăng nhập lại bằng Google để xem dữ liệu. Dữ liệu của bạn vẫn được lưu an toàn."
+          onConfirm={logout}
+        />
       </nav>
       <main key={pathname} className="page">
         <Routes>

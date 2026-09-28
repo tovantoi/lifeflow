@@ -1,11 +1,12 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { useStore } from '../stores/useStore'
+import DeleteButton from '../components/DeleteButton'
 import { money, today, EXPENSE_CATS } from '../lib/format'
 
 const COLORS = ['#0f766e', '#c2410c', '#2563eb', '#a16207', '#7c3aed', '#be185d', '#0891b2', '#65a30d', '#475569', '#dc2626']
 
 export default function Dashboard() {
-  const { tasks, transactions } = useStore()
+  const { tasks, transactions, resetData } = useStore()
   const month = today().slice(0, 7)
   const sum = (list, type) => list.filter((t) => t.type === type).reduce((a, t) => a + t.amount, 0)
 
@@ -68,6 +69,27 @@ export default function Dashboard() {
               <b className={t.type === 'income' ? 'good' : 'bad'}>{t.type === 'income' ? '+' : '-'}{money(t.amount)}</b>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="card" style={{ marginTop: 16 }}>
+        <h3>Đặt lại dữ liệu</h3>
+        <p className="mute" style={{ margin: '0 0 12px' }}>
+          Xóa vĩnh viễn để bắt đầu lại từ đầu. Thu nhập và chi tiêu "tháng này" tự động tính lại theo tháng, nên sang tháng mới bạn không cần đặt lại.
+        </p>
+        <div className="form" style={{ marginBottom: 0 }}>
+          <DeleteButton
+            className="" label="Xóa tất cả giao dịch" confirmLabel="Xóa tất cả" disabled={!transactions.length}
+            title="Xóa TẤT CẢ giao dịch?"
+            message={`${transactions.length} giao dịch sẽ bị xóa vĩnh viễn và số dư về 0. Không thể hoàn tác.`}
+            onConfirm={() => resetData('transactions')}
+          />
+          <DeleteButton
+            className="" label="Xóa tất cả công việc" confirmLabel="Xóa tất cả" disabled={!tasks.length}
+            title="Xóa TẤT CẢ công việc?"
+            message={`${tasks.length} công việc sẽ bị xóa vĩnh viễn. Không thể hoàn tác.`}
+            onConfirm={() => resetData('tasks')}
+          />
         </div>
       </div>
     </>

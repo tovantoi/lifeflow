@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 // Nút Xóa có hộp thoại xác nhận (nhấn Esc hoặc bấm ra ngoài để hủy)
-export default function DeleteButton({ onConfirm, title = 'Xóa mục này?', message = 'Hành động này không thể hoàn tác.' }) {
+export default function DeleteButton({
+  onConfirm,
+  title = 'Xóa mục này?',
+  message = 'Hành động này không thể hoàn tác.',
+  label = 'Xóa',
+  confirmLabel = 'Xóa',
+  confirmClass = 'danger',
+  className = 'ghost',
+  disabled = false,
+}) {
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
@@ -14,7 +23,7 @@ export default function DeleteButton({ onConfirm, title = 'Xóa mục này?', me
 
   return (
     <>
-      <button className="ghost" onClick={() => setOpen(true)} aria-label={title}>Xóa</button>
+      <button className={className} disabled={disabled} onClick={() => setOpen(true)} aria-label={title}>{label}</button>
       {open &&
         createPortal(
           <div className="overlay" onClick={() => setOpen(false)}>
@@ -24,7 +33,7 @@ export default function DeleteButton({ onConfirm, title = 'Xóa mục này?', me
               <p className="mute">{message}</p>
               <div className="modal-actions">
                 <button autoFocus onClick={() => setOpen(false)}>Hủy</button>
-                <button className="danger" onClick={() => { setOpen(false); onConfirm() }}>Xóa</button>
+                <button className={confirmClass} onClick={() => { setOpen(false); onConfirm() }}>{confirmLabel}</button>
               </div>
             </div>
           </div>,
