@@ -46,7 +46,7 @@ export default function Tasks() {
   }
 
   const list = tasks
-    .filter((t) => (status === 'all' || t.status === status) && t.title.toLowerCase().includes(q.toLowerCase()))
+    .filter((t) => (status === 'all' || t.status === status) && String(t.title || '').toLowerCase().includes(q.toLowerCase()))
     .sort((a, b) =>
       sort === 'priority'
         ? ORDER[a.priority] - ORDER[b.priority]

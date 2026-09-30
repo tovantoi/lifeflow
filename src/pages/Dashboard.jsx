@@ -8,9 +8,9 @@ const COLORS = ['#0f766e', '#c2410c', '#2563eb', '#a16207', '#7c3aed', '#be185d'
 export default function Dashboard() {
   const { tasks, transactions, resetData } = useStore()
   const month = today().slice(0, 7)
-  const sum = (list, type) => list.filter((t) => t.type === type).reduce((a, t) => a + t.amount, 0)
+  const sum = (list, type) => list.filter((t) => t.type === type).reduce((a, t) => a + (Number(t.amount) || 0), 0)
 
-  const thisMonth = transactions.filter((t) => t.date.startsWith(month))
+  const thisMonth = transactions.filter((t) => String(t.date || '').startsWith(month))
   const income = sum(thisMonth, 'income')
   const expense = sum(thisMonth, 'expense')
   const balance = sum(transactions, 'income') - sum(transactions, 'expense')
@@ -19,7 +19,7 @@ export default function Dashboard() {
   const byCat = Object.entries(EXPENSE_CATS)
     .map(([key, name]) => ({
       name,
-      value: thisMonth.filter((t) => t.type === 'expense' && t.category === key).reduce((a, t) => a + t.amount, 0),
+      value: thisMonth.filter((t) => t.type === 'expense' && t.category === key).reduce((a, t) => a + (Number(t.amount) || 0), 0),
     }))
     .filter((d) => d.value > 0)
 
