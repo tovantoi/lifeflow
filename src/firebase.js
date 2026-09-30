@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, GoogleAuthProvider } from 'firebase/auth'
+import { getMessaging, isSupported } from 'firebase/messaging'
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore'
 
 const app = initializeApp({
@@ -15,3 +16,6 @@ export const provider = new GoogleAuthProvider()
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
 })
+
+// Không phải mọi trình duyệt hỗ trợ FCM (ví dụ Safari cũ), nên kiểm tra trước
+export const messagingPromise = isSupported().then((ok) => (ok ? getMessaging(app) : null))

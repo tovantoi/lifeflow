@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useStore } from '../stores/useStore'
 import DeleteButton from '../components/DeleteButton'
+import TimeInput from '../components/TimeInput'
 import { PRIORITIES, STATUSES } from '../lib/format'
 
 const ORDER = { urgent: 0, high: 1, medium: 2, low: 3 }
-const empty = { title: '', description: '', priority: 'medium', dueDate: '', category: '' }
+const empty = { title: '', description: '', priority: 'medium', dueDate: '', dueTime: '', category: '' }
 
 export default function Tasks() {
   const { tasks, addTask, updateTask, removeTask } = useStore()
@@ -29,6 +30,7 @@ export default function Tasks() {
       description: t.description || '',
       priority: t.priority || 'medium',
       dueDate: t.dueDate || '',
+      dueTime: t.dueTime || '',
       category: t.category || '',
     })
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -46,7 +48,9 @@ export default function Tasks() {
   const list = tasks
     .filter((t) => (status === 'all' || t.status === status) && t.title.toLowerCase().includes(q.toLowerCase()))
     .sort((a, b) =>
-      sort === 'priority' ? ORDER[a.priority] - ORDER[b.priority] : (a.dueDate || '9999').localeCompare(b.dueDate || '9999')
+      sort === 'priority'
+        ? ORDER[a.priority] - ORDER[b.priority]
+        : `${a.dueDate || '9999'} ${a.dueTime || ''}`.localeCompare(`${b.dueDate || '9999'} ${b.dueTime || ''}`)
     )
 
   return (
@@ -59,6 +63,7 @@ export default function Tasks() {
           {Object.entries(PRIORITIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
         <input type="date" value={form.dueDate} onChange={set('dueDate')} />
+        <TimeInput value={form.dueTime} onChange={set('dueTime')} disabled={!form.dueDate} title={!form.dueDate ? 'Chọn ngày trước' : 'Giờ đến hạn (không bắt buộc)'} />
         <input placeholder="Mô tả" value={form.description} onChange={set('description')} />
         <button className="primary">{editId ? 'Cập nhật' : 'Thêm công việc'}</button>
         {editId && <button type="button" onClick={cancelEdit}>Hủy sửa</button>}
@@ -88,7 +93,7 @@ export default function Tasks() {
               />{' '}
               <span className={t.status === 'done' ? 'done' : ''}>{t.title}</span>
               <div className="mute">
-                <span className={`badge ${t.priority}`}>{PRIORITIES[t.priority]}</span>{t.category && ` · ${t.category}`}{t.dueDate && ` · hạn ${t.dueDate}`}
+                <span className={`badge ${t.priority}`}>{PRIORITIES[t.priority]}</span>{t.category && ` · ${t.category}`}{t.dueDate && ` · hạn ${t.dueDate}${t.dueTime ? ` ${t.dueTime}` : ''}`}
                 {t.description && ` · ${t.description}`}
               </div>
             </label>

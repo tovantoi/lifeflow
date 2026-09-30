@@ -96,3 +96,23 @@ button.danger:hover:not(:disabled){filter:brightness(1.1);color:#fff;border-colo
 /* Chỉnh sửa */
 .row.editing{background:color-mix(in srgb,var(--acc) 12%,transparent)}
 button.ghost.edit:hover{background:color-mix(in srgb,var(--acc) 14%,transparent);color:var(--acc)}
+
+/* input giờ: hiện theo định dạng 24h thay vì SA/CH của trình duyệt */
+input[type=time]{ }
+input[type=time]::-webkit-datetime-edit-ampm-field{ display:none; }
+
+/* Ô chọn giờ tự thiết kế */
+.time-input{display:flex;align-items:center;gap:2px;padding:0 4px;border-radius:10px;border:1px solid var(--line);background:var(--card);transition:border-color .2s}
+.time-input.disabled{opacity:.55}
+.time-input span{color:var(--mute)}
+.time-input button.ghost{padding:2px 4px;font-size:15px;line-height:1;margin-left:2px}
+
+/* Dropdown tự vẽ dùng cho giờ/phút */
+.dd{position:relative}
+.dd-btn{width:2.3em;padding:9px 2px;border:0;background:none;color:var(--ink);font:inherit;font-variant-numeric:tabular-nums;text-align:center;border-radius:6px;cursor:pointer;transition:background .15s}
+.dd-btn:hover:not(:disabled){background:var(--hover);border:0;color:var(--ink)}
+.dd-btn:disabled{opacity:.45;cursor:not-allowed}
+.dd-list{position:absolute;z-index:60;top:calc(100% + 6px);left:50%;transform:translateX(-50%);width:72px;max-height:230px;overflow-y:auto;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:var(--lift);padding:4px;animation:pop .15s var(--ease)}
+.dd-opt{padding:7px 0;border-radius:6px;text-align:center;font-variant-numeric:tabular-nums;cursor:pointer;transition:background .12s}
+.dd-opt:hover{background:var(--hover)}
+.dd-opt.active{background:var(--acc);color:var(--on-acc)}

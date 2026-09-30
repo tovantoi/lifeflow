@@ -5,7 +5,7 @@ import Dashboard from './pages/Dashboard'
 import Tasks from './pages/Tasks'
 import Transactions from './pages/Transactions'
 import DeleteButton from './components/DeleteButton'
-import { notifySupported, notifyPermission, requestNotifyPermission, checkDueTasks } from './lib/notify'
+import { notifySupported, notifyPermission, enablePush, listenForegroundPush, checkDueTasksLocally } from './lib/notify'
 
 const PATHS = {
   home: 'M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z',
@@ -39,12 +39,14 @@ function Shell() {
   // Kiểm tra việc đến hạn khi mở app, rồi lặp lại mỗi 5 phút trong lúc app đang mở
   useEffect(() => {
     if (!user) return
-    checkDueTasks(tasks)
-    const id = setInterval(() => checkDueTasks(tasks), 5 * 60 * 1000)
+    checkDueTasksLocally(tasks)
+    const id = setInterval(() => checkDueTasksLocally(tasks), 5 * 60 * 1000)
     return () => clearInterval(id)
   }, [user, tasks])
 
-  const enableNotify = async () => setPermission(await requestNotifyPermission())
+  useEffect(() => { if (permission === 'granted') listenForegroundPush() }, [permission])
+
+  const enableNotify = async () => setPermission(await enablePush())
 
   if (!ready) return <div className="center mute">Đang tải…</div>
 

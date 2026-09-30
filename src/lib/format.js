@@ -17,7 +17,7 @@ export const INCOME_CATS = {
   gift: 'Quà tặng', other: 'Khác',
 }
 export const PRIORITIES = { low: 'Thấp', medium: 'Trung bình', high: 'Cao', urgent: 'Khẩn cấp' }
-export const STATUSES = { todo: 'Todo', in_progress: 'In Progress', review: 'Review', done: 'Done' }
+export const STATUSES = { todo: 'Cần làm', in_progress: 'Đang làm', review: 'Đang xem lại', done: 'Hoàn thành' }
 
 // Đọc số tiền người dùng gõ: "300000", "300.000", "50k", "5tr", "1,5tr", "2 tỷ",
 // và kiểu viết tắt: "6tr890" = 6.890.000, "1tr5" = 1.500.000, "2tỷ350" = 2.350.000.000
