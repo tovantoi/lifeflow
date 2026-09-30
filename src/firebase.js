@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, GoogleAuthProvider } from 'firebase/auth'
 import { getMessaging, isSupported } from 'firebase/messaging'
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore'
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, getFirestore } from 'firebase/firestore'
 
 const app = initializeApp({
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,9 +13,20 @@ const app = initializeApp({
 export const auth = getAuth(app)
 export const provider = new GoogleAuthProvider()
 // Cache offline: mất mạng vẫn dùng được, có mạng lại sẽ tự đồng bộ
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
-})
+// Bật lưu dữ liệu ngoại tuyến (cache) để mất mạng vẫn dùng được. Một số trình duyệt
+// di động (chế độ ẩn danh, Safari cũ, hoặc khi IndexedDB đã bị trình duyệt khác
+// giữ) không hỗ trợ việc này và initializeFirestore sẽ ném lỗi ngay khi tải trang,
+// làm cả app trắng màn hình. Nếu vậy, quay về Firestore không cache offline.
+let firestoreDb
+try {
+  firestoreDb = initializeFirestore(app, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+  })
+} catch (e) {
+  console.warn('Không bật được cache ngoại tuyến, dùng chế độ thường:', e)
+  firestoreDb = getFirestore(app)
+}
+export const db = firestoreDb
 
 // Không phải mọi trình duyệt hỗ trợ FCM (ví dụ Safari cũ), nên kiểm tra trước
 export const messagingPromise = isSupported().then((ok) => (ok ? getMessaging(app) : null))
