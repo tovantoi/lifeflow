@@ -17,6 +17,23 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Nếu app lỗi ngay khi tải (trước khi giao diện kịp hiện), hiển thị thông báo
+      // thay vì để màn hình trống, để biết nguyên nhân trên điện thoại.
+      (function () {
+        function show(msg) {
+          var root = document.getElementById('root')
+          if (!root || root.childElementCount) return
+          root.innerHTML = '<div style="min-height:100vh;display:grid;place-items:center;padding:20px;font-family:system-ui,sans-serif;color:#e8eef2;background:#0c1419;text-align:center"><div><h2>LifeFlow không tải được</h2><p style="font-size:13px;opacity:.8;word-break:break-word"></p><button onclick="location.reload()" style="padding:10px 18px;border:0;border-radius:10px;background:#2dd4bf;color:#062a26;font-weight:600">Tải lại</button></div></div>'
+          root.querySelector('p').textContent = msg
+        }
+        // Chờ một chút: nếu React vẫn hiển thị được thì không làm gì cả
+        window.addEventListener('error', function (e) {
+          var msg = e.message || 'Lỗi không xác định'
+          setTimeout(function () { show(msg) }, 1500)
+        })
+      })()
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

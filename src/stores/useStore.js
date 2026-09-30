@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth'
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth'
 import { collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch } from 'firebase/firestore'
 import { auth, db, provider } from '../firebase'
 import { uid as newId } from '../lib/format'
@@ -44,7 +44,15 @@ export const useStore = create(
           unsubs = [listen('tasks'), listen('transactions')]
         }),
 
-      login: () => signInWithPopup(auth, provider).catch((e) => alert('Đăng nhập thất bại: ' + e.message)),
+      // Trên điện thoại (nhất là khi mở từ app đã cài trên màn hình chính) cửa sổ popup
+      // thường bị chặn, nên chuyển sang đăng nhập bằng cách chuyển hướng trang.
+      login: () =>
+        signInWithPopup(auth, provider).catch((e) => {
+          if (['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment'].includes(e.code))
+            return signInWithRedirect(auth, provider)
+          if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request')
+            alert('Đăng nhập thất bại: ' + e.message)
+        }),
       logout: () => signOut(auth),
 
       addTask: (t) => safe(setDoc(ref('tasks', newId()), { status: 'todo', createdAt: Date.now(), ...t })),

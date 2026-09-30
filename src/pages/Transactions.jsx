@@ -56,11 +56,11 @@ export default function Transactions() {
 
   const list = transactions
     .filter((t) => (filter === 'all' || t.type === filter) && (t.note + catName(t)).toLowerCase().includes(q.toLowerCase()))
-    .sort((a, b) => b.date.localeCompare(a.date))
+    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
 
   const exportCSV = () => {
     const rows = [['Ngày', 'Loại', 'Danh mục', 'Số tiền', 'Ghi chú'],
-      ...list.map((t) => [t.date, t.type === 'income' ? 'Thu' : 'Chi', catName(t), t.amount, `"${t.note.replace(/"/g, '""')}"`])]
+      ...list.map((t) => [t.date, t.type === 'income' ? 'Thu' : 'Chi', catName(t), t.amount, `"${(t.note || '').replace(/"/g, '""')}"`])]
     const blob = new Blob(['\uFEFF' + rows.map((r) => r.join(',')).join('\n')], { type: 'text/csv;charset=utf-8' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
