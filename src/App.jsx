@@ -1,10 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import { useStore } from './stores/useStore'
 import Dashboard from './pages/Dashboard'
 import Tasks from './pages/Tasks'
 import Transactions from './pages/Transactions'
 import DeleteButton from './components/DeleteButton'
+import { notifySupported, notifyPermission, requestNotifyPermission, checkDueTasks } from './lib/notify'
 
 const PATHS = {
   home: 'M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z',
@@ -13,6 +14,7 @@ const PATHS = {
   sun: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5',
   moon: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z',
   out: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
+  bell: 'M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21a2 2 0 0 0 4 0',
 }
 const Icon = ({ name }) => (
   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -27,11 +29,22 @@ const links = [
 ]
 
 function Shell() {
-  const { theme, toggleTheme, user, ready, init, login, logout } = useStore()
+  const { theme, toggleTheme, user, ready, init, login, logout, tasks } = useStore()
+  const [permission, setPermission] = useState(notifySupported() ? notifyPermission() : 'unsupported')
   const { pathname } = useLocation()
 
   useEffect(() => { document.documentElement.dataset.theme = theme }, [theme])
   useEffect(() => init(), [init])
+
+  // Kiểm tra việc đến hạn khi mở app, rồi lặp lại mỗi 5 phút trong lúc app đang mở
+  useEffect(() => {
+    if (!user) return
+    checkDueTasks(tasks)
+    const id = setInterval(() => checkDueTasks(tasks), 5 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [user, tasks])
+
+  const enableNotify = async () => setPermission(await requestNotifyPermission())
 
   if (!ready) return <div className="center mute">Đang tải…</div>
 
@@ -54,6 +67,16 @@ function Shell() {
         {links.map(([to, label, icon]) => (
           <NavLink key={to} to={to} end={to === '/'}><Icon name={icon} />{label}</NavLink>
         ))}
+        {permission === 'default' && (
+          <button className="theme" onClick={enableNotify}>
+            <Icon name="bell" />Bật thông báo nhắc việc
+          </button>
+        )}
+        {permission === 'denied' && (
+          <div className="mute" style={{ padding: '6px 12px', fontSize: 12 }}>
+            Thông báo đang bị chặn. Bật lại trong cài đặt trình duyệt cho trang này.
+          </div>
+        )}
         <button className="theme" onClick={toggleTheme}>
           <Icon name={theme === 'light' ? 'moon' : 'sun'} />{theme === 'light' ? 'Chế độ tối' : 'Chế độ sáng'}
         </button>
