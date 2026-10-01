@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../stores/useStore'
 import DeleteButton from '../components/DeleteButton'
+import MonthYearPicker from '../components/MonthYearPicker'
 import { money, today, parseAmount, EXPENSE_CATS, INCOME_CATS } from '../lib/format'
 
 export default function Transactions() {
@@ -110,7 +111,7 @@ export default function Transactions() {
             <option value="month">Theo tháng</option><option value="year">Theo năm</option>
           </select>
           {periodType === 'month'
-            ? <input type="month" value={period} onChange={(e) => setPeriod(e.target.value)} aria-label="Chọn tháng" />
+            ? <MonthYearPicker value={period} years={years} onChange={setPeriod} ariaLabel="Chọn tháng cần dọn giao dịch" />
             : <select value={period} onChange={(e) => setPeriod(e.target.value)} aria-label="Chọn năm">{years.map((year) => <option key={year} value={year}>{year}</option>)}</select>}
           <DeleteButton
             className="danger period-delete"

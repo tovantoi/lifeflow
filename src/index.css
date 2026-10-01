@@ -130,6 +130,8 @@ input[type=time]::-webkit-datetime-edit-ampm-field{ display:none; }
 .period-copy .mute{font-size:11px}
 .period-controls{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0}
 .period-controls select,.period-controls input{min-width:0;padding:8px 10px;font-size:13px}
+.month-year-picker{display:flex;align-items:center;gap:8px;min-width:0}
+.month-year-picker select{min-width:0;padding:8px 10px;font-size:13px}
 .period-delete{white-space:nowrap;padding:9px 12px;font-size:12px}
 .records-panel{height:clamp(270px,54vh,620px);min-height:270px;padding:0;display:flex;flex-direction:column;overflow:hidden;border-radius:16px}
 .records-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;padding:15px 18px;background:var(--card);border-bottom:1px solid var(--line)}
@@ -170,6 +172,8 @@ input[type=time]::-webkit-datetime-edit-ampm-field{ display:none; }
 @media(max-width:700px){
  .period-tools{align-items:stretch;flex-direction:column;gap:10px;padding:12px}
  .period-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);justify-content:stretch}
+ .month-year-picker{grid-column:1/-1;width:100%}
+ .month-year-picker select{flex:1}
  .period-delete{grid-column:1/-1;width:100%}
  .records-panel{height:clamp(260px,48vh,560px);min-height:260px}
  .records-heading{padding:13px 14px}
