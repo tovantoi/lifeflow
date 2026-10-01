@@ -178,6 +178,11 @@ function Shell() {
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/transactions" element={<Transactions />} />
         </Routes>
+        <footer className="page-footer">
+          <span className="footer-rule" />
+          <div className="footer-brand"><span className="footer-symbol">t</span><span className="footer-wordmark">tovantoi</span></div>
+          <span className="footer-copyright">© {new Date().getFullYear()} tovantoi <i>·</i> Made for a life in flow</span>
+        </footer>
       </main>
     </div>
   );

@@ -94,8 +94,8 @@ export const useStore = create(
         ),
       updateTx: (id, patch) => safe(updateDoc(ref("transactions", id), patch)),
       // Xóa toàn bộ 'tasks' hoặc 'transactions' của người dùng (theo lô, tối đa 400 mục/lô)
-      resetData: async (name) => {
-        const ids = get()[name].map((d) => d.id);
+      resetData: async (name, selectedIds) => {
+        const ids = selectedIds ?? get()[name].map((d) => d.id);
         try {
           for (let i = 0; i < ids.length; i += 400) {
             const batch = writeBatch(db);
