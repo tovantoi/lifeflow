@@ -87,6 +87,68 @@ export default function Transactions() {
     URL.revokeObjectURL(url)
   }
 
+  const exportXLSX = async () => {
+    try {
+      const { default: ExcelJS } = await import('exceljs')
+      const workbook = new ExcelJS.Workbook()
+      workbook.creator = 'LifeFlow'
+      workbook.created = new Date()
+      const sheet = workbook.addWorksheet('Giao dịch', {
+        views: [{ state: 'frozen', ySplit: 1 }],
+      })
+      sheet.columns = [
+        { header: 'Ngày', key: 'date', width: 15 },
+        { header: 'Loại giao dịch', key: 'type', width: 19 },
+        { header: 'Danh mục', key: 'category', width: 20 },
+        { header: 'Số tiền (VND)', key: 'amount', width: 20 },
+        { header: 'Ghi chú', key: 'note', width: 38 },
+      ]
+      list.forEach((transaction) => {
+        const match = String(transaction.date || '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
+        sheet.addRow({
+          date: match ? new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))) : transaction.date || '',
+          type: transaction.type === 'income' ? 'Thu nhập' : 'Chi tiêu',
+          category: catName(transaction),
+          amount: Number.isFinite(Number(transaction.amount)) ? Number(transaction.amount) : 0,
+          note: transaction.note || '',
+        })
+      })
+      sheet.autoFilter = { from: 'A1', to: `E${Math.max(sheet.rowCount, 1)}` }
+      const header = sheet.getRow(1)
+      header.height = 30
+      header.eachCell((cell) => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF087E78' } }
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 }
+        cell.alignment = { vertical: 'middle', horizontal: 'center' }
+        cell.border = { bottom: { style: 'medium', color: { argb: 'FF20C9B7' } } }
+      })
+      sheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return
+        row.height = 23
+        row.eachCell((cell) => {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowNumber % 2 === 0 ? 'FFF0FAF9' : 'FFFFFFFF' } }
+          cell.border = { bottom: { style: 'thin', color: { argb: 'FFDCE9E8' } } }
+          cell.alignment = { vertical: 'middle' }
+        })
+        row.getCell(1).numFmt = 'dd/mm/yyyy'
+        row.getCell(4).numFmt = '#,##0 "₫"'
+        row.getCell(4).alignment = { vertical: 'middle', horizontal: 'right' }
+        row.getCell(4).font = { bold: true, color: { argb: row.getCell(2).value === 'Thu nhập' ? 'FF16834A' : 'FFDA6A25' } }
+      })
+      const buffer = await workbook.xlsx.writeBuffer()
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = 'lifeflow-giao-dich.xlsx'
+      anchor.click()
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (e) {
+      console.error('Không thể tạo file Excel:', e)
+      setError('Không thể tạo file Excel. Vui lòng thử lại.')
+    }
+  }
+
   return (
     <>
       <div className="page-heading">
@@ -115,6 +177,7 @@ export default function Transactions() {
         <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Lọc giao dịch">
           <option value="all">Tất cả giao dịch</option><option value="income">Thu nhập</option><option value="expense">Chi tiêu</option>
         </select>
+        <button type="button" onClick={exportXLSX} disabled={!list.length}>Xuất Excel (.xlsx)</button>
         <button type="button" onClick={exportCSV} disabled={!list.length}>Xuất CSV</button>
       </div>
 

@@ -5,6 +5,7 @@ const { getFirestore } = require('firebase-admin/firestore')
 const { getMessaging } = require('firebase-admin/messaging')
 const { getStorage } = require('firebase-admin/storage')
 const { randomUUID } = require('node:crypto')
+const ExcelJS = require('exceljs')
 
 const bucketName = 'lifeflow-59e20.firebasestorage.app'
 initializeApp({ storageBucket: bucketName })
@@ -169,11 +170,93 @@ function tasksCsv(docs) {
   return makeCsv(rows)
 }
 
+function excelDate(value) {
+  const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  return match ? new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))) : ''
+}
+
+async function makeExcel(sheetName, headers, rows, widths, dateColumns = []) {
+  const workbook = new ExcelJS.Workbook()
+  workbook.creator = 'LifeFlow'
+  const sheet = workbook.addWorksheet(sheetName, { views: [{ state: 'frozen', ySplit: 1 }] })
+  sheet.columns = headers.map((header, index) => ({ header, key: `c${index}`, width: widths[index] || 18 }))
+  rows.forEach((values) => sheet.addRow(Object.fromEntries(values.map((value, index) => [`c${index}`, value]))))
+  sheet.autoFilter = { from: 'A1', to: `${String.fromCharCode(64 + headers.length)}${Math.max(sheet.rowCount, 1)}` }
+  const header = sheet.getRow(1)
+  header.height = 30
+  header.eachCell((cell) => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF087E78' } }
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 }
+    cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+    cell.border = { bottom: { style: 'medium', color: { argb: 'FF20C9B7' } } }
+  })
+  sheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return
+    row.height = 23
+    row.eachCell((cell) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowNumber % 2 === 0 ? 'FFF0FAF9' : 'FFFFFFFF' } }
+      cell.border = { bottom: { style: 'thin', color: { argb: 'FFDCE9E8' } } }
+      cell.alignment = { vertical: 'middle', wrapText: true }
+    })
+    for (const column of dateColumns) row.getCell(column).numFmt = 'dd/mm/yyyy'
+  })
+  return Buffer.from(await workbook.xlsx.writeBuffer())
+}
+
+async function transactionsXlsx(docs) {
+  const rows = docs.map((doc) => {
+    const transaction = doc.data()
+    return [
+      excelDate(transaction.date),
+      transaction.type === 'income' ? 'Thu nhập' : 'Chi tiêu',
+      TRANSACTION_CATEGORIES[transaction.category] || transaction.category || 'Khác',
+      Number.isFinite(Number(transaction.amount)) ? Number(transaction.amount) : 0,
+      transaction.note || '',
+    ]
+  })
+  const buffer = await makeExcel('Giao dịch', ['Ngày', 'Loại giao dịch', 'Danh mục', 'Số tiền (VND)', 'Ghi chú'], rows, [15, 19, 20, 20, 38], [1])
+  const workbook = new ExcelJS.Workbook()
+  await workbook.xlsx.load(buffer)
+  const sheet = workbook.getWorksheet('Giao dịch')
+  sheet.getColumn(4).numFmt = '#,##0 "₫"'
+  sheet.getColumn(4).alignment = { vertical: 'middle', horizontal: 'right' }
+  sheet.eachRow((row, rowNumber) => {
+    if (rowNumber < 2) return
+    row.getCell(4).font = { bold: true, color: { argb: row.getCell(2).value === 'Thu nhập' ? 'FF16834A' : 'FFDA6A25' } }
+  })
+  return Buffer.from(await workbook.xlsx.writeBuffer())
+}
+
+async function tasksXlsx(docs) {
+  const rows = docs.map((doc) => {
+    const task = doc.data()
+    const createdAt = typeof task.createdAt === 'number' ? new Date(task.createdAt) : task.createdAt?.toDate?.() || ''
+    return [task.title || '', task.description || '', task.category || '', PRIORITY_LABELS[task.priority] || task.priority || '', STATUS_LABELS[task.status] || task.status || '', createdAt, excelDate(task.dueDate), task.dueTime || '']
+  })
+  const buffer = await makeExcel('Công việc', ['Công việc', 'Mô tả', 'Danh mục', 'Độ ưu tiên', 'Trạng thái', 'Ngày tạo', 'Ngày đến hạn', 'Giờ đến hạn'], rows, [30, 42, 18, 18, 20, 22, 18, 16], [6, 7])
+  const workbook = new ExcelJS.Workbook()
+  await workbook.xlsx.load(buffer)
+  workbook.getWorksheet('Công việc').getColumn(6).numFmt = 'dd/mm/yyyy hh:mm'
+  return Buffer.from(await workbook.xlsx.writeBuffer())
+}
+
 async function saveArchiveFile(path, content, fileName, monthId, kind) {
   await bucket.file(path).save(Buffer.from(content, 'utf8'), {
     resumable: false,
     metadata: {
       contentType: 'text/csv; charset=utf-8',
+      contentDisposition: `attachment; filename="${fileName}"`,
+      cacheControl: 'private, max-age=0, no-transform',
+      metadata: { firebaseStorageDownloadTokens: randomUUID(), month: monthId, kind },
+    },
+  })
+}
+
+async function saveArchiveWorkbook(path, content, fileName, monthId, kind) {
+  await bucket.file(path).save(content, {
+    resumable: false,
+    metadata: {
+      contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       contentDisposition: `attachment; filename="${fileName}"`,
       cacheControl: 'private, max-age=0, no-transform',
       metadata: { firebaseStorageDownloadTokens: randomUUID(), month: monthId, kind },
@@ -199,17 +282,27 @@ exports.archivePreviousMonth = onSchedule(
 
       const transactionPath = `users/${userDoc.id}/archives/${monthId}/transactions.csv`
       const taskPath = `users/${userDoc.id}/archives/${monthId}/tasks.csv`
+      const transactionExcelPath = `users/${userDoc.id}/archives/${monthId}/transactions.xlsx`
+      const taskExcelPath = `users/${userDoc.id}/archives/${monthId}/tasks.xlsx`
       const transactionFileName = `LifeFlow-Giao-dich-${monthId}.csv`
       const taskFileName = `LifeFlow-Cong-viec-${monthId}.csv`
 
+      const [transactionWorkbook, taskWorkbook] = await Promise.all([
+        transactionsXlsx(transactions.docs),
+        tasksXlsx(tasks.docs),
+      ])
       await Promise.all([
         saveArchiveFile(transactionPath, transactionsCsv(transactions.docs), transactionFileName, monthId, 'transactions'),
         saveArchiveFile(taskPath, tasksCsv(tasks.docs), taskFileName, monthId, 'tasks'),
+        saveArchiveWorkbook(transactionExcelPath, transactionWorkbook, transactionFileName.replace(/\.csv$/, '.xlsx'), monthId, 'transactions'),
+        saveArchiveWorkbook(taskExcelPath, taskWorkbook, taskFileName.replace(/\.csv$/, '.xlsx'), monthId, 'tasks'),
       ])
       await userRef.collection('archives').doc(monthId).set({
         month: monthId,
         transactionPath,
         taskPath,
+        transactionExcelPath,
+        taskExcelPath,
         transactionCount: transactions.size,
         taskCount: tasks.size,
         createdAt: new Date(),
@@ -247,9 +340,13 @@ exports.listMonthlyArchives = onCall(
       if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return null
       const transactionPath = `users/${uid}/archives/${month}/transactions.csv`
       const taskPath = `users/${uid}/archives/${month}/tasks.csv`
-      const [transactionMetadata, taskMetadata] = await Promise.all([
+      const transactionExcelPath = `users/${uid}/archives/${month}/transactions.xlsx`
+      const taskExcelPath = `users/${uid}/archives/${month}/tasks.xlsx`
+      const [transactionMetadata, taskMetadata, transactionExcelMetadata, taskExcelMetadata] = await Promise.all([
         archive.transactionPath ? bucket.file(transactionPath).getMetadata().catch(() => [null]) : [null],
         archive.taskPath ? bucket.file(taskPath).getMetadata().catch(() => [null]) : [null],
+        archive.transactionExcelPath ? bucket.file(transactionExcelPath).getMetadata().catch(() => [null]) : [null],
+        archive.taskExcelPath ? bucket.file(taskExcelPath).getMetadata().catch(() => [null]) : [null],
       ])
       return {
         month,
@@ -257,6 +354,8 @@ exports.listMonthlyArchives = onCall(
         taskCount: archive.taskCount || 0,
         transactionUrl: transactionMetadata[0] ? createDownloadUrl(transactionPath, transactionMetadata[0]) : null,
         taskUrl: taskMetadata[0] ? createDownloadUrl(taskPath, taskMetadata[0]) : null,
+        transactionExcelUrl: transactionExcelMetadata[0] ? createDownloadUrl(transactionExcelPath, transactionExcelMetadata[0]) : null,
+        taskExcelUrl: taskExcelMetadata[0] ? createDownloadUrl(taskExcelPath, taskExcelMetadata[0]) : null,
       }
     }))
     return { archives: archives.filter(Boolean) }

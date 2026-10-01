@@ -190,6 +190,7 @@ input[type=time]::-webkit-datetime-edit-ampm-field{ display:none; }
 .archive-file-info .mute{font-size:11px}
 .archive-download{display:inline-flex;align-items:center;gap:8px;padding:8px 11px;border:1px solid color-mix(in srgb,var(--acc) 40%,var(--line));border-radius:10px;background:color-mix(in srgb,var(--acc) 9%,var(--card));color:var(--acc);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;transition:background .18s,transform .18s}
 .archive-download:hover{background:color-mix(in srgb,var(--acc) 16%,var(--card));transform:translateY(-1px)}
+.archive-download-xlsx{border-color:color-mix(in srgb,var(--good) 45%,var(--line));background:color-mix(in srgb,var(--good) 8%,var(--card));color:var(--good)}
 .archive-unavailable{color:var(--mute);font-size:11px}
 .archive-empty{display:grid;justify-items:center;gap:9px;padding:36px 20px;text-align:center}
 .archive-empty-icon{width:48px;height:48px;margin-bottom:2px;font-size:25px}
@@ -200,6 +201,9 @@ input[type=time]::-webkit-datetime-edit-ampm-field{ display:none; }
 .archive-error span{font-size:12px;overflow-wrap:anywhere}
 .archive-error button{justify-self:start}
 @media(max-width:700px){
+ .archive-file-row{flex-wrap:wrap}
+ .archive-file-info{flex-basis:calc(100% - 50px)}
+ .archive-file-row .archive-download{margin-left:46px}
  .period-tools{align-items:stretch;flex-direction:column;gap:10px;padding:12px}
  .period-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);justify-content:stretch}
  .month-year-picker{grid-column:1/-1;width:100%}

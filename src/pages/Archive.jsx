@@ -49,14 +49,14 @@ export default function Archive() {
         <span className="archive-intro-icon" aria-hidden="true">▤</span>
         <div>
           <h3>Lịch sử của bạn, được lưu tự động</h3>
-          <p className="mute">CSV của tháng trước được tạo vào ngày 1 hàng tháng lúc 00:10 theo giờ Việt Nam. Dữ liệu gốc trong Công việc và Giao dịch vẫn được giữ nguyên.</p>
+          <p className="mute">Bản CSV và Excel của tháng trước được tạo vào ngày 1 hàng tháng lúc 00:10 theo giờ Việt Nam. Dữ liệu gốc trong Công việc và Giao dịch vẫn được giữ nguyên.</p>
         </div>
       </section>
 
       {error && !loading && <div className="archive-error card" role="alert"><strong>Chưa tải được kho lưu trữ</strong><span>{error}</span><button type="button" onClick={refreshArchives}>Thử lại</button></div>}
       {loading && <div className="card archive-empty"><span className="archive-spinner" aria-hidden="true">◌</span><span>Đang tải các bản lưu…</span></div>}
       {!loading && !error && archives.length === 0 && (
-        <div className="card archive-empty"><span className="archive-empty-icon" aria-hidden="true">▤</span><strong>Chưa có bản lưu nào</strong><span className="mute">Bản CSV đầu tiên sẽ xuất hiện sau lần chạy lưu trữ hàng tháng kế tiếp.</span></div>
+          <div className="card archive-empty"><span className="archive-empty-icon" aria-hidden="true">▤</span><strong>Chưa có bản lưu nào</strong><span className="mute">Bản lưu đầu tiên sẽ xuất hiện sau lần chạy lưu trữ hàng tháng kế tiếp.</span></div>
       )}
       {!loading && !error && archives.length > 0 && (
         <section className="archive-list" aria-label="Các bản lưu theo tháng">
@@ -69,17 +69,19 @@ export default function Archive() {
               <div className="archive-files">
                 <div className="archive-file-row">
                   <span className="archive-file-icon transaction-file-icon">₫</span>
-                  <div className="archive-file-info"><strong>Giao dịch</strong><span className="mute">{archive.transactionCount} dòng · CSV UTF‑8</span></div>
+                  <div className="archive-file-info"><strong>Giao dịch</strong><span className="mute">{archive.transactionCount} dòng · CSV và Excel</span></div>
                   {archive.transactionUrl
                     ? <a className="archive-download" href={archive.transactionUrl} download={`LifeFlow-Giao-dich-${archive.month}.csv`}>Tải CSV <span aria-hidden="true">↓</span></a>
                     : <span className="archive-unavailable">Chưa có tệp</span>}
+                  {archive.transactionExcelUrl && <a className="archive-download archive-download-xlsx" href={archive.transactionExcelUrl} download={`LifeFlow-Giao-dich-${archive.month}.xlsx`}>Tải Excel <span aria-hidden="true">↓</span></a>}
                 </div>
                 <div className="archive-file-row">
                   <span className="archive-file-icon task-file-icon">✓</span>
-                  <div className="archive-file-info"><strong>Công việc</strong><span className="mute">{archive.taskCount} dòng · CSV UTF‑8</span></div>
+                  <div className="archive-file-info"><strong>Công việc</strong><span className="mute">{archive.taskCount} dòng · CSV và Excel</span></div>
                   {archive.taskUrl
                     ? <a className="archive-download" href={archive.taskUrl} download={`LifeFlow-Cong-viec-${archive.month}.csv`}>Tải CSV <span aria-hidden="true">↓</span></a>
                     : <span className="archive-unavailable">Chưa có tệp</span>}
+                  {archive.taskExcelUrl && <a className="archive-download archive-download-xlsx" href={archive.taskExcelUrl} download={`LifeFlow-Cong-viec-${archive.month}.xlsx`}>Tải Excel <span aria-hidden="true">↓</span></a>}
                 </div>
               </div>
             </article>
