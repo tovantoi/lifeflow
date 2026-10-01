@@ -10,6 +10,7 @@ import { useStore } from "./stores/useStore";
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import Transactions from "./pages/Transactions";
+import Archive from "./pages/Archive";
 import DeleteButton from "./components/DeleteButton";
 import {
   notifySupported,
@@ -27,6 +28,7 @@ const PATHS = {
   moon: "M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z",
   out: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9",
   bell: "M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21a2 2 0 0 0 4 0",
+  archive: "M3 4h18v4H3zM5 8v12h14V8M10 12h4",
 };
 const Icon = ({ name }) => (
   <svg
@@ -48,6 +50,7 @@ const links = [
   ["/", "Tổng quan", "home"],
   ["/tasks", "Công việc", "task"],
   ["/transactions", "Giao dịch", "wallet"],
+  ["/archive", "Lưu trữ", "archive"],
 ];
 
 function Shell() {
@@ -177,6 +180,7 @@ function Shell() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/transactions" element={<Transactions />} />
+          <Route path="/archive" element={<Archive />} />
         </Routes>
         <footer className="page-footer">
           <span className="footer-rule" />

@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getMessaging, isSupported } from "firebase/messaging";
+import { getFunctions } from "firebase/functions";
 import {
   getFirestore,
   initializeFirestore,
@@ -17,6 +18,7 @@ const app = initializeApp({
 
 export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
+export const functions = getFunctions(app, "asia-southeast1");
 // Trên điện thoại dùng cache trong bộ nhớ để tránh phụ thuộc IndexedDB khi khởi động.
 // Máy tính vẫn giữ cache ngoại tuyến persistent như trước. Nếu không tạo được cache,
 // fallback về Firestore mặc định để giao diện tiếp tục tải và có thể hiện lỗi thật.

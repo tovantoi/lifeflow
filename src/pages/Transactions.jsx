@@ -58,9 +58,27 @@ export default function Transactions() {
     : transaction.date.slice(0, 4) === period))
 
   const exportCSV = () => {
-    const rows = [['Ngày', 'Loại', 'Danh mục', 'Số tiền', 'Ghi chú'],
-      ...list.map((transaction) => [transaction.date, transaction.type === 'income' ? 'Thu' : 'Chi', catName(transaction), transaction.amount, `"${(transaction.note || '').replace(/"/g, '""')}"`])]
-    const blob = new Blob(['\uFEFF' + rows.map((row) => row.join(',')).join('\n')], { type: 'text/csv;charset=utf-8' })
+    const textCell = (value) => {
+      let text = String(value ?? '')
+      if (/^[\t\r ]*[=+@-]/.test(text)) text = `'${text}`
+      return `"${text.replace(/"/g, '""')}"`
+    }
+    const dateCell = (value) => {
+      const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
+      return match ? `${match[3]}/${match[2]}/${match[1]}` : value || ''
+    }
+    const rows = [
+      ['Ngày', 'Loại giao dịch', 'Danh mục', 'Số tiền (VND)', 'Ghi chú'].map(textCell),
+      ...list.map((transaction) => [
+        textCell(dateCell(transaction.date)),
+        textCell(transaction.type === 'income' ? 'Thu nhập' : 'Chi tiêu'),
+        textCell(catName(transaction)),
+        Number.isFinite(Number(transaction.amount)) ? String(Number(transaction.amount)) : '0',
+        textCell(transaction.note || ''),
+      ]),
+    ]
+    // Excel theo thiết lập vùng Việt Nam dùng dấu chấm phẩy để tách cột.
+    const blob = new Blob(['\uFEFF' + rows.map((row) => row.join(';')).join('\r\n') + '\r\n'], { type: 'text/csv;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
     anchor.href = url
